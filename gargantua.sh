@@ -10,8 +10,8 @@
 # System Update
 function system_update {
   apt-get update
-  apt-get -y install aptitude
-  aptitude -y full-upgrade 
+  # apt-get -y install aptitude
+  # aptitude -y full-upgrade 
 }
 
 # User Add Sudo
@@ -81,7 +81,7 @@ function system_add_host_entry {
 function goodstuff {
     sed -i -e 's/^#PS1=/PS1=/' /root/.bashrc # enable the colorful root bash prompt
     sed -i -e "s/^#alias ll='ls -l'/alias ll='ls -al'/" /root/.bashrc # enable ll list long alias <3
-    echo "ENABLE TERM COLORS AND ll COMMAND" >> /SETUP_LOG
+    echo "alias pgconsole='sudo -i -u postgres'" >> /home/$USER_USERNAME/.bashrc # create postgres console alias
 }
 
 # utility functions
@@ -107,6 +107,11 @@ function setup_webserver {
   apt-get install -y nodejs
 }
 
+function configure_postgresql {
+  sed -i 's/local   all             all                                     peer/local   all             all                                     md5/' $(find / -name "pg_hba.conf")
+  touch /tmp/restart-postgres
+}
+
 function clean_webserver {
   rm /etc/nginx/sites-enabled/default
   touch /tmp/restart-nginx
@@ -117,10 +122,11 @@ function clean_webserver {
 function setup_rvm {
   gpg --keyserver hkp://keys.gnupg.net --recv-keys 409B6B1796C275462A1703113804BB82D39DC0E3
   curl -sSL https://get.rvm.io | bash -s stable
+  chown $USER_USERNAME:$USER_USERNAME -R /usr/local/rvm
   source ~/.rvm/scripts/rvm
   rvm requirements
-  # rvm install ruby-$RUBY_VERSION
-  # rvm use $RUBY_VERSION --default
+  rvm install $RUBY_VERSION
+  rvm use $RUBY_VERSION --default
   rvmsudo /usr/bin/apt-get install build-essential openssl libreadline6 libreadline6-dev curl git-core zlib1g zlib1g-dev libssl-dev libyaml-dev libsqlite3-dev sqlite3 libxml2-dev libxslt-dev autoconf libc6-dev ncurses-dev automake libtool bison subversion
 }
 
@@ -200,22 +206,31 @@ cat >> /SETUP_LOG <<EOD
 REMOVE NGINX DEFAULT SITES
 EOD
 
+# enable local connections to postgresql
+configure_postgresql
+cat >> /SETUP_LOG <<EOD
+REMOVE NGINX DEFAULT SITES
+EOD
+
 # setup rvm for ruby version managment and install latest ruby version
 setup_rvm
 cat >> /SETUP_LOG <<EOD
 RVM INSTALLED
 EOD
 
+# passenger
 setup_passenger
 cat >> /SETUP_LOG <<EOD
 PASSENGER INSTALLED
 EOD
 
+#elasticsearch
 setup_elasticsearch
 cat >> /SETUP_LOG <<EOD
 ELASTICSEARCH INSTALLED
 EOD
 
+# goodies & goodbye
 goodstuff
 cat >> /SETUP_LOG <<EOD
 GOODSTUFF ENABLED
