@@ -110,7 +110,6 @@ function setup_webserver {
 function clean_webserver {
   rm /etc/nginx/sites-enabled/default
   touch /tmp/restart-nginx
-  echo "REMOVED DEFAULT NGINX SITE" >> /SETUP_LOG
 }
 
 # rvm
@@ -120,8 +119,9 @@ function setup_rvm {
   curl -sSL https://get.rvm.io | bash -s stable
   source ~/.rvm/scripts/rvm
   rvm requirements
-  rvm install ruby-$RUBY_VERSION
-  rvm use $RUBY_VERSION --default
+  # rvm install ruby-$RUBY_VERSION
+  # rvm use $RUBY_VERSION --default
+  rvmsudo /usr/bin/apt-get install build-essential openssl libreadline6 libreadline6-dev curl git-core zlib1g zlib1g-dev libssl-dev libyaml-dev libsqlite3-dev sqlite3 libxml2-dev libxslt-dev autoconf libc6-dev ncurses-dev automake libtool bison subversion
 }
 
 # passenger
@@ -144,9 +144,7 @@ function imready {
   curl -A 'Mandrill-Curl/1.0' -X POST -H "Content-Type: application/json" --data '{"key":"8TGbblcuNApLQRAw4FQ4Jw","merge":true, "message":{"text":"Server setup complete, check /SETUP_LOG for details.","subject":"Linode Server Complete","from_email":"new.server@koodit.it","from_name":"Linode Server","to":[{"email":"a.macchieraldo@koodit.it","type":"to"}]}}' 'https://mandrillapp.com/api/1.0/messages/send.json'
 }
 
-
 ##### SETUP START
-
 
 # system update just in case
 system_update
@@ -235,3 +233,5 @@ ALL WENT WELL. ENJOY!
 EOD
 
 imready
+
+reboot
