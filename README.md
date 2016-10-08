@@ -7,7 +7,7 @@ Massive Server Setup
 - Setup Hostname
 - Add Host Record to /etc/hosts
 - Add Sudo User with custom name/password
-- Disable SSH access to root user
+- Disable SSH access for root user
 - Postfix install for emails
 - Install nginx + dependencies (curl, git-core, nginx, postgresql & postgresql-contrib, libpq-dev, libmagickwand-dev, nodejs)
 - Remove default site from nginx
