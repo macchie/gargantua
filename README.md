@@ -23,4 +23,8 @@ Linode Stackscript for Massive Server Setup
 - Sends welcome email
 - Reboot System
 
+## Usage
+
+Copy **gargantua.sh** to a new linode stackscript.
+
 ### Enjoy! :)
