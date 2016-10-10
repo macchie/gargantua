@@ -5,13 +5,16 @@
 # <UDF name="user_password" Label="Server Account Password" default="Password123!" example="Example: 987654321!" />
 # <UDF name="ssh_port" Label="Server SSH Port" default="6666" example="Example: 1234" />
 
-# <UDF name="ruby_version" Label="Default Ruby Version for RVM" default="2.3.1" example="Example: 2.3.1" />
+
+# <UDF name="es_cluster_name" Label="ElasticSearch Cluster Name" default="my-application" example="Example: my-application" />
+# <UDF name="es_http_port" Label="ElasticSearch HTTP Port" default="9200" example="Example: 9200" />
+
+# <DDF name="es_node_name" Label="ElasticSearch Cluster Name" default="My First Node" example="Example: My First Node" />
+# <DDF name="ruby_version" Label="Default Ruby Version for RVM" default="2.3.1" example="Example: 2.3.1" />
 
 # System Update
 function system_update {
   apt-get update
-  # apt-get -y install aptitude
-  # aptitude -y full-upgrade 
 }
 
 # User Add Sudo
@@ -82,6 +85,7 @@ function goodstuff {
     sed -i -e 's/^#PS1=/PS1=/' /root/.bashrc # enable the colorful root bash prompt
     sed -i -e "s/^#alias ll='ls -l'/alias ll='ls -al'/" /root/.bashrc # enable ll list long alias <3
     echo "alias pgconsole='sudo -i -u postgres'" >> /home/$USER_USERNAME/.bashrc # create postgres console alias
+    echo "alias installrails='gem install rails --no-ri --no-rdoc'" >> /home/$USER_USERNAME/.bashrc # rails install alias
 }
 
 # utility functions
@@ -92,19 +96,19 @@ function restart_services {
         /etc/init.d/$service restart
         rm -f /tmp/restart-$service
     done
-    echo "SERVICES RESTARTED" >> /SETUP_LOG
 }
 
 # # common libraries
 
-function setup_webserver {
+function setup_dependencies {
   apt-get install -y curl
   apt-get install -y git-core
-  apt-get install -y nginx
   apt-get install -y postgresql postgresql-contrib
   apt-get install -y libpq-dev
+  apt-get install -y imagemagick
   apt-get install -y libmagickwand-dev
   apt-get install -y nodejs
+  apt-get install -y default-jre
 }
 
 function configure_postgresql {
@@ -112,7 +116,17 @@ function configure_postgresql {
   touch /tmp/restart-postgres
 }
 
+function setup_nginx_passenger {
+   apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys 561F9B9CAC40B2F7
+   apt-get install -y apt-transport-https ca-certificates
+   sh -c 'echo deb https://oss-binaries.phusionpassenger.com/apt/passenger xenial main > /etc/apt/sources.list.d/passenger.list'
+   apt-get update
+   apt-get install -y nginx-extras passenger
+   sed -i 's/# include \/etc\/nginx\/passenger.conf;/include \/etc\/nginx\/passenger.conf;/' /etc/nginx/nginx.conf
+}
+
 function clean_webserver {
+  chown $USER_USERNAME:$USER_USERNAME -R /etc/nginx
   rm /etc/nginx/sites-enabled/default
   touch /tmp/restart-nginx
 }
@@ -130,17 +144,20 @@ function setup_rvm {
   rvmsudo /usr/bin/apt-get install build-essential openssl libreadline6 libreadline6-dev curl git-core zlib1g zlib1g-dev libssl-dev libyaml-dev libsqlite3-dev sqlite3 libxml2-dev libxslt-dev autoconf libc6-dev ncurses-dev automake libtool bison subversion
 }
 
-# passenger
-
-function setup_passenger {
-  rvmsudo passenger-install-nginx-module
-}
-
 # elasticsearch
 function setup_elasticsearch {
-  wget https://download.elastic.co/elasticsearch/release/org/elasticsearch/distribution/deb/elasticsearch/2.3.1/elasticsearch-2.3.1.deb
-  dpkg -i elasticsearch-2.3.1.deb
+  apt-get install -y elasticsearch
   systemctl enable elasticsearch.service
+}
+
+function configure_elasticsearch {
+  sed -i "s/#cluster.name: elasticsearch/cluster.name: $ES_CLUSTER_NAME/" /etc/elasticsearch/elasticsearch.yml
+  sed -i "s/#http.port: 9200/http.port: $ES_HTTP_PORT/" /etc/elasticsearch/elasticsearch.yml
+  sed -i 's/#network.bind_host: 192.168.0.1/network.bind_host: 0.0.0.0/' /etc/elasticsearch/elasticsearch.yml
+
+  sed -i 's/#START_DAEMON=true/START_DAEMON=true/' /etc/default/elasticsearch
+
+  systemctl start elasticsearch
 }
 
 # all went good
@@ -188,17 +205,21 @@ POSTFIX SETUP COMPLETE
 EOD
 
 # setup webserver with common dependencies & remove default site
-setup_webserver
+setup_dependencies
 cat >> /SETUP_LOG <<EOD
-# SETUP WEBSERVER
+# SETUP DEPENCENCIES
   curl INSTALLED
   git-core INSTALLED
-  nginx INSTALLED
   postgresql & postgresql-contrib INSTALLED
   libpq-dev INSTALLED
   libmagickwand-dev INSTALLED
   nodejs INSTALLED
 # END SETUP WEBSERVER
+EOD
+
+setup_nginx_passenger
+cat >> /SETUP_LOG <<EOD
+NGINX + PASSENGER INSTALLED
 EOD
 
 clean_webserver
@@ -218,16 +239,21 @@ cat >> /SETUP_LOG <<EOD
 RVM INSTALLED
 EOD
 
-# passenger
-setup_passenger
+#elasticsearch
+setup_redis
 cat >> /SETUP_LOG <<EOD
-PASSENGER INSTALLED
+REDIS SERVER INSTALLED
 EOD
 
 #elasticsearch
 setup_elasticsearch
 cat >> /SETUP_LOG <<EOD
 ELASTICSEARCH INSTALLED
+EOD
+
+configure_elasticsearch
+cat >> /SETUP_LOG <<EOD
+ELASTICSEARCH CONFIGURED
 EOD
 
 # goodies & goodbye
@@ -244,6 +270,8 @@ EOD
 cat >> /SETUP_LOG <<EOD
 
 ALL WENT WELL. ENJOY!
+
+PS: DELETE ME
 
 EOD
 
