@@ -11,14 +11,14 @@ Linode Stackscript for Massive Server Setup
 - Postfix install for emails
 - Install common dependencies (curl,libpq-dev,git-core,imagemagick,libmagickwand-dev,nodejs,default-jre)
 - Install postgresql (postgresql,postgresql-contrib)
-- Configure postgresql for local peers (postgresql,postgresql-contrib)
+- Configure postgresql for local peers
 - Install nginx + phusion passenger for rails applications
 - Setup nginx (enable passenger)
 - Remove default site from nginx
 - Install RVM + requirements
 - Install Elasticsearch
 - Configure Elasticsearch
-- Enable GoodStuffs (terminal color, ll command)
+- Enable GoodStuffs (terminal colors, ll command)
 - Restart interested services
 - Sends welcome email
 - Reboot System
