@@ -1,5 +1,8 @@
 #!/bin/bash
+# <UDF name="notification_email" Label="Email for Confirmation" default="" example="Example: your@email.com" />
+
 # <UDF name="hostname" Label="Hostname" default="" example="Example: koodit_Server" />
+
 
 # <UDF name="user_username" Label="Server Account Username" default="koodit" example="Example: koodit" />
 # <UDF name="user_password" Label="Server Account Password" default="Password123!" example="Example: 987654321!" />
@@ -139,8 +142,8 @@ function setup_rvm {
   chown $USER_USERNAME:$USER_USERNAME -R /usr/local/rvm
   source ~/.rvm/scripts/rvm
   rvm requirements
-  rvm install $RUBY_VERSION
-  rvm use $RUBY_VERSION --default
+  # rvm install $RUBY_VERSION
+  # rvm use $RUBY_VERSION --default
   rvmsudo /usr/bin/apt-get install build-essential openssl libreadline6 libreadline6-dev curl git-core zlib1g zlib1g-dev libssl-dev libyaml-dev libsqlite3-dev sqlite3 libxml2-dev libxslt-dev autoconf libc6-dev ncurses-dev automake libtool bison subversion
 }
 
@@ -212,6 +215,7 @@ cat >> /SETUP_LOG <<EOD
   git-core INSTALLED
   postgresql & postgresql-contrib INSTALLED
   libpq-dev INSTALLED
+  imagemagick INSTALLED
   libmagickwand-dev INSTALLED
   nodejs INSTALLED
 # END SETUP WEBSERVER

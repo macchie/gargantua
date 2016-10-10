@@ -1,20 +1,26 @@
 # gargantua
-Massive Server Setup
+Linode Stackscript for Massive Server Setup
 
 ## Contents
 
 - Initial System Update
-- Setup Hostname
+- Hostname Setup
 - Add Host Record to /etc/hosts
-- Add Sudo User with custom name/password
+- Add Sudo User with custom username/password
 - Disable SSH access for root user
 - Postfix install for emails
-- Install nginx + dependencies (curl, git-core, nginx, postgresql & postgresql-contrib, libpq-dev, libmagickwand-dev, nodejs)
+- Install common dependencies (curl,libpq-dev,git-core,imagemagick,libmagickwand-dev,nodejs,default-jre)
+- Install postgresql (postgresql,postgresql-contrib)
+- Configure postgresql for local peers (postgresql,postgresql-contrib)
+- Install nginx + phusion passenger for rails applications
+- Setup nginx (enable passenger)
 - Remove default site from nginx
-- Install RVM + requirements + default Ruby Version
-- Install Phusion Passenger
+- Install RVM + requirements
 - Install Elasticsearch
-- Enable GoodStuffs (colors in terms, ll command)
+- Configure Elasticsearch
+- Enable GoodStuffs (terminal color, ll command)
 - Restart interested services
 - Sends welcome email
 - Reboot System
+
+### Enjoy! :)
