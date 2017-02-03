@@ -8,13 +8,6 @@
 # <UDF name="user_password" Label="Server Account Password" default="Password123!" example="Example: 987654321!" />
 # <UDF name="ssh_port" Label="Server SSH Port" default="6666" example="Example: 1234" />
 
-
-# <UDF name="es_cluster_name" Label="ElasticSearch Cluster Name" default="my-application" example="Example: my-application" />
-# <UDF name="es_http_port" Label="ElasticSearch HTTP Port" default="9200" example="Example: 9200" />
-
-# <DDF name="es_node_name" Label="ElasticSearch Cluster Name" default="My First Node" example="Example: My First Node" />
-# <DDF name="ruby_version" Label="Default Ruby Version for RVM" default="2.3.1" example="Example: 2.3.1" />
-
 # System Update
 function system_update {
   apt-get update
@@ -87,19 +80,7 @@ function system_add_host_entry {
 function goodstuff {
     sed -i -e 's/^#PS1=/PS1=/' /root/.bashrc # enable the colorful root bash prompt
     sed -i -e "s/^#alias ll='ls -l'/alias ll='ls -al'/" /root/.bashrc # enable ll list long alias <3
-    echo "alias pgconsole='sudo -i -u postgres'" >> /home/$USER_USERNAME/.bashrc # create postgres console alias
-    echo "alias installrails='gem install rails --no-ri --no-rdoc'" >> /home/$USER_USERNAME/.bashrc # rails install alias
-    # echo "alias installrails='gem install rails --no-ri --no-rdoc'" >> /home/$USER_USERNAME/.bashrc # rails install alias
 }
-
-# function rconsole {
-#     APPNAME="$1";
-#     if [ ! -n "$APPNAME" ]; then
-#         echo "Appname undefined";
-#         return 1;
-#     fi;
-#     cd ~/apps/$APPNAME/current && rails c -e production;
-# }
 
 # utility functions
 
@@ -116,8 +97,6 @@ function restart_services {
 function setup_dependencies {
   apt-get install -y curl
   apt-get install -y git-core
-  apt-get install -y postgresql postgresql-contrib
-  apt-get install -y libpq-dev
   apt-get install -y imagemagick
   apt-get install -y libmagickwand-dev
   apt-get install -y nodejs
@@ -125,61 +104,11 @@ function setup_dependencies {
   apt-get install -y default-jre
 }
 
-function configure_postgresql {
-  sed -i 's/local   all             all                                     peer/local   all             all                                     md5/' $(find / -name "pg_hba.conf")
-  touch /tmp/restart-postgres
-}
-
-function setup_nginx_passenger {
-  apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys 561F9B9CAC40B2F7
-  apt-get install -y apt-transport-https ca-certificates
-  sh -c 'echo deb https://oss-binaries.phusionpassenger.com/apt/passenger xenial main > /etc/apt/sources.list.d/passenger.list'
-  apt-get update
-  apt-get install -y nginx-extras passenger
-  sed -i 's/# include \/etc\/nginx\/passenger.conf;/include \/etc\/nginx\/passenger.conf;/' /etc/nginx/nginx.conf
-}
-
-function clean_webserver {
-  chown $USER_USERNAME:$USER_USERNAME -R /etc/nginx
-  chown $USER_USERNAME:$USER_USERNAME -R /etc/nginx/sites-enabled
-  rm /etc/nginx/sites-enabled/default
-  touch /tmp/restart-nginx
-}
-
-# rvm
-
-function setup_rvm {
-  gpg --keyserver hkp://keys.gnupg.net --recv-keys 409B6B1796C275462A1703113804BB82D39DC0E3
-  curl -sSL https://get.rvm.io | bash -s stable
-  chown $USER_USERNAME:$USER_USERNAME -R /usr/local/rvm
-  source ~/.rvm/scripts/rvm
-  rvm requirements
-  # rvm install $RUBY_VERSION
-  # rvm use $RUBY_VERSION --default
-  rvmsudo /usr/bin/apt-get install build-essential openssl libreadline6 libreadline6-dev curl git-core zlib1g zlib1g-dev libssl-dev libyaml-dev libsqlite3-dev sqlite3 libxml2-dev libxslt-dev autoconf libc6-dev ncurses-dev automake libtool bison subversion
-}
-
-# elasticsearch
-function setup_elasticsearch {
-  apt-get install -y elasticsearch
-  systemctl enable elasticsearch.service
-}
-
-function configure_elasticsearch {
-  sed -i "s/#cluster.name: elasticsearch/cluster.name: $ES_CLUSTER_NAME/" /etc/elasticsearch/elasticsearch.yml
-  sed -i "s/#http.port: 9200/http.port: $ES_HTTP_PORT/" /etc/elasticsearch/elasticsearch.yml
-  sed -i 's/#network.bind_host: 192.168.0.1/network.bind_host: 0.0.0.0/' /etc/elasticsearch/elasticsearch.yml
-
-  sed -i 's/#START_DAEMON=true/START_DAEMON=true/' /etc/default/elasticsearch
-
-  systemctl start elasticsearch
-}
-
 # all went good
 
 function imready {
   # send mail
-  curl -A 'Mandrill-Curl/1.0' -X POST -H "Content-Type: application/json" --data '{"key":"8TGbblcuNApLQRAw4FQ4Jw","merge":true, "message":{"text":"Server setup complete, check /SETUP_LOG for details.","subject":"Linode Server Complete","from_email":"new.server@koodit.it","from_name":"Linode Server","to":[{"email":"andrea.macchieraldo@kimon.it","type":"to"}]}}' 'https://mandrillapp.com/api/1.0/messages/send.json'
+  curl -A 'Mandrill-Curl/1.0' -X POST -H "Content-Type: application/json" --data '{"key":"8TGbblcuNApLQRAw4FQ4Jw","merge":true, "message":{"text":"Server setup complete, check /SETUP_LOG for details.","subject":"Linode Server Complete","from_email":"new.server@koodit.it","from_name":"Linode Server","to":[{"email":"a.macchieraldo@koodit.it","type":"to"}]}}' 'https://mandrillapp.com/api/1.0/messages/send.json'
 }
 
 ##### SETUP START
@@ -225,51 +154,10 @@ cat >> /SETUP_LOG <<EOD
 # SETUP DEPENCENCIES
   curl INSTALLED
   git-core INSTALLED
-  postgresql & postgresql-contrib INSTALLED
-  libpq-dev INSTALLED
   imagemagick INSTALLED
   libmagickwand-dev INSTALLED
   nodejs INSTALLED
 # END SETUP WEBSERVER
-EOD
-
-setup_nginx_passenger
-cat >> /SETUP_LOG <<EOD
-NGINX + PASSENGER INSTALLED
-EOD
-
-clean_webserver
-cat >> /SETUP_LOG <<EOD
-REMOVE NGINX DEFAULT SITES
-EOD
-
-# enable local connections to postgresql
-configure_postgresql
-cat >> /SETUP_LOG <<EOD
-REMOVE NGINX DEFAULT SITES
-EOD
-
-# setup rvm for ruby version managment and install latest ruby version
-setup_rvm
-cat >> /SETUP_LOG <<EOD
-RVM INSTALLED
-EOD
-
-#elasticsearch
-setup_redis
-cat >> /SETUP_LOG <<EOD
-REDIS SERVER INSTALLED
-EOD
-
-#elasticsearch
-setup_elasticsearch
-cat >> /SETUP_LOG <<EOD
-ELASTICSEARCH INSTALLED
-EOD
-
-configure_elasticsearch
-cat >> /SETUP_LOG <<EOD
-ELASTICSEARCH CONFIGURED
 EOD
 
 # goodies & goodbye
