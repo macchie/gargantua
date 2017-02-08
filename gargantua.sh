@@ -1,4 +1,5 @@
 #!/bin/bash
+
 # <UDF name="notification_email" Label="Email for Confirmation" default="" example="Example: your@email.com" />
 
 # <UDF name="hostname" Label="Hostname" default="" example="Example: koodit_Server" />
@@ -92,15 +93,6 @@ function goodstuff {
     # echo "alias installrails='gem install rails --no-ri --no-rdoc'" >> /home/$USER_USERNAME/.bashrc # rails install alias
 }
 
-# function rconsole {
-#     APPNAME="$1";
-#     if [ ! -n "$APPNAME" ]; then
-#         echo "Appname undefined";
-#         return 1;
-#     fi;
-#     cd ~/apps/$APPNAME/current && rails c -e production;
-# }
-
 # utility functions
 
 function restart_services {
@@ -123,6 +115,10 @@ function setup_dependencies {
   apt-get install -y nodejs
   apt-get install -y nodejs-legacy
   apt-get install -y default-jre
+  DEBIAN_FRONTEND=noninteractive apt-get -y install mysql-server
+  mysqladmin -u root $MYSQLPASS $MYSQLPASS
+  apt-get install -y php-fpm php-mysql
+  apt-get install -y php-pgsql
 }
 
 function configure_postgresql {
@@ -145,6 +141,27 @@ function clean_webserver {
   rm /etc/nginx/sites-enabled/default
   touch /tmp/restart-nginx
 }
+
+# PHP Setup
+function setup_php {
+  sed -i 's/post_max_size = 8M/post_max_size = 32M/' /etc/php/7.0/fpm/php.ini
+  sed -i 's/upload_max_filesize = 2M/upload_max_filesize = 32M/' /etc/php/7.0/fpm/php.ini
+  sed -i 's/;extension=php_pgsql.dll/extension=php_pgsql.dll/' /etc/php/7.0/fpm/php.ini
+  sed -i 's/;cgi.fix_pathinfo=1/cgi.fix_pathinfo=0/' /etc/php/7.0/fpm/php.ini
+  touch /tmp/restart-php7.0-fpm
+}
+
+# MyWebSQL Panel
+function setup_mywebsql {
+  git clone https://github.com/Samnan/MyWebSQL /home/$USER_USERNAME/apps/mywebsql
+  wget https://github.com/macchie/mywebsql/raw/master/config/nginx.sample.conf -O /etc/nginx/sites-enabled/mywebsql
+  sed -i "s/  listen %PORT%;/  listen $MWSQL_PORT;/" /etc/nginx/sites-enabled/mywebsql
+  sed -i "s/  server_name %SERVERNAME%;/  server_name $MWSQL_SERVERNAME;/" /etc/nginx/sites-enabled/mywebsql
+  sed -i "s/  root %ROOTPATH%;/  root \/home\/$USER_USERNAME\/apps\/mywebsql;/" /etc/nginx/sites-enabled/mywebsql
+  chown $USER_USERNAME:$USER_USERNAME -R /home/$USER_USERNAME/apps/mywebsql
+}
+
+
 
 # rvm
 
@@ -231,6 +248,11 @@ cat >> /SETUP_LOG <<EOD
   libmagickwand-dev INSTALLED
   nodejs INSTALLED
 # END SETUP WEBSERVER
+EOD
+
+setup_php
+cat >> /SETUP_LOG <<EOD
+PHP INSTALLED AND CONFIGURED
 EOD
 
 setup_nginx_passenger
