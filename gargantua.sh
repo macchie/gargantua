@@ -2,13 +2,14 @@
 
 # <UDF name="notification_email" Label="Email for Confirmation" default="" example="Example: your@email.com" />
 
-# <UDF name="hostname" Label="Hostname" default="" example="Example: koodit_Server" />
-
+# <UDF name="hostname" Label="Hostname" default="" example="Example: server" />
+# <UDF name="domain" Label="Hostname" default="" example="Example: server.com" />
 
 # <UDF name="user_username" Label="Server Account Username" default="koodit" example="Example: koodit" />
 # <UDF name="user_password" Label="Server Account Password" default="Password123!" example="Example: 987654321!" />
 # <UDF name="ssh_port" Label="Server SSH Port" default="6666" example="Example: 1234" />
 
+# <UDF name="mwsql_port" Label="MyWebSQL Port" default="6666" example="Example: 1234" />
 
 # <UDF name="es_cluster_name" Label="ElasticSearch Cluster Name" default="my-application" example="Example: my-application" />
 # <UDF name="es_http_port" Label="ElasticSearch HTTP Port" default="9200" example="Example: 9200" />
@@ -156,7 +157,7 @@ function setup_mywebsql {
   git clone https://github.com/Samnan/MyWebSQL /home/$USER_USERNAME/apps/mywebsql
   wget https://github.com/macchie/mywebsql/raw/master/config/nginx.sample.conf -O /etc/nginx/sites-enabled/mywebsql
   sed -i "s/  listen %PORT%;/  listen $MWSQL_PORT;/" /etc/nginx/sites-enabled/mywebsql
-  sed -i "s/  server_name %SERVERNAME%;/  server_name $MWSQL_SERVERNAME;/" /etc/nginx/sites-enabled/mywebsql
+  sed -i "s/  server_name %SERVERNAME%;/  server_name sql.$DOMAIN;/" /etc/nginx/sites-enabled/mywebsql
   sed -i "s/  root %ROOTPATH%;/  root \/home\/$USER_USERNAME\/apps\/mywebsql;/" /etc/nginx/sites-enabled/mywebsql
   chown $USER_USERNAME:$USER_USERNAME -R /home/$USER_USERNAME/apps/mywebsql
 }
@@ -258,6 +259,11 @@ EOD
 setup_nginx_passenger
 cat >> /SETUP_LOG <<EOD
 NGINX + PASSENGER INSTALLED
+EOD
+
+setup_mywebsql
+cat >> /SETUP_LOG <<EOD
+MYWEBSQL INSTALLED AND CONFIGURED
 EOD
 
 clean_webserver
